@@ -3,43 +3,62 @@ package com.abualzahra.vip
 import android.os.Bundle
 import android.webkit.*
 import androidx.appcompat.app.AppCompatActivity
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 
 class MainActivity : AppCompatActivity() {
+    private lateinit var myWebView: WebView
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val webView = WebView(this)
-        setContentView(webView)
+        myWebView = WebView(this)
+        setContentView(myWebView)
 
-        webView.settings.apply {
+        // 1. تفعيل كافة خصائص المتصفح المتقدمة
+        myWebView.settings.apply {
             javaScriptEnabled = true
-            domStorageEnabled = true
+            domStorageEnabled = true // ضروري جداً لرسائل الـ Transport
             databaseEnabled = true
             mediaPlaybackRequiresUserGesture = false
-            javaScriptCanOpenWindowsAutomatically = true
             allowFileAccess = true
             allowContentAccess = true
-            setSupportZoom(true)
-            builtInZoomControls = true
-            displayZoomControls = false
-            // تحسين أداء الـ WebSocket
-            cacheMode = WebSettings.LOAD_DEFAULT
+            // تفعيل الـ WebRTC والاتصالات المباشرة
+            javaScriptCanOpenWindowsAutomatically = true
         }
 
-        webView.webChromeClient = object : WebChromeClient() {
+        // 2. معالج الصلاحيات المتقدم (WebChromeClient)
+        myWebView.webChromeClient = object : WebChromeClient() {
             override fun onPermissionRequest(request: PermissionRequest) {
+                // منح الموقع صلاحية الميكروفون والكاميرا والشبكة فوراً
                 runOnUiThread {
                     request.grant(request.resources)
                 }
             }
         }
 
-        webView.webViewClient = object : WebViewClient() {
-            override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
-                return false
-            }
-        }
+        myWebView.webViewClient = WebViewClient()
 
-        // الرابط الصحيح لموقع أبو الزهراء
-        webView.loadUrl("https://abualzahracom.online")
+        // 3. طلب صلاحيات النظام من الهاتف نفسه
+        checkPermissions()
+
+        // تحميل موقعك
+        myWebView.loadUrl("https://abualzahracom.online")
+    }
+
+    private fun checkPermissions() {
+        val permissions = arrayOf(
+            Manifest.permission.RECORD_AUDIO,
+            Manifest.permission.MODIFY_AUDIO_SETTINGS,
+            Manifest.permission.INTERNET,
+            Manifest.permission.ACCESS_NETWORK_STATE
+        )
+        val permissionsToRequest = permissions.filter {
+            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
+        }
+        if (permissionsToRequest.isNotEmpty()) {
+            ActivityCompat.requestPermissions(this, permissionsToRequest.toTypedArray(), 101)
+        }
     }
 }
