@@ -11,22 +11,35 @@ class MainActivity : AppCompatActivity() {
         setContentView(webView)
 
         webView.settings.apply {
-            javaScriptEnabled = true // تفعيل الجافا سكريبت
-            domStorageEnabled = true // تفعيل التخزين المحلي (ضروري للاتصال)
+            javaScriptEnabled = true
+            domStorageEnabled = true
             databaseEnabled = true
-            mediaPlaybackRequiresUserGesture = false // السماح بتشغيل الصوت تلقائياً
+            mediaPlaybackRequiresUserGesture = false
+            javaScriptCanOpenWindowsAutomatically = true
             allowFileAccess = true
             allowContentAccess = true
+            setSupportZoom(true)
+            builtInZoomControls = true
+            displayZoomControls = false
+            // تحسين أداء الـ WebSocket
+            cacheMode = WebSettings.LOAD_DEFAULT
         }
 
-        // معالج لطلب صلاحيات الميكروفون داخل الـ WebView
         webView.webChromeClient = object : WebChromeClient() {
             override fun onPermissionRequest(request: PermissionRequest) {
-                request.grant(request.resources)
+                runOnUiThread {
+                    request.grant(request.resources)
+                }
             }
         }
 
-        webView.webViewClient = WebViewClient()
-        webView.loadUrl("https://your-website-link.com") // استبدل هذا برابط موقعك الحقيقي
+        webView.webViewClient = object : WebViewClient() {
+            override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
+                return false
+            }
+        }
+
+        // الرابط الصحيح لموقع أبو الزهراء
+        webView.loadUrl("https://abualzahracom.online")
     }
 }
